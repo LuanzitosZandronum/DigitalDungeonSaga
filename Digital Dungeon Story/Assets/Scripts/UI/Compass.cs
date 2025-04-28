@@ -1,10 +1,18 @@
+// Compass.cs
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
+
+public enum CompassDirection
+{
+    North,
+    East,
+    South,
+    West
+}
 
 public class Compass : MonoBehaviour
 {
-    public TextMeshProUGUI compassText; // Referência ao texto na UI
+    public TextMeshProUGUI compassText;
 
     void Update()
     {
@@ -13,23 +21,38 @@ public class Compass : MonoBehaviour
 
     void UpdateCompass()
     {
-        float yRotation = Mathf.Round(transform.eulerAngles.y); // Arredonda para evitar imprecisões
+        CompassDirection currentDirection = GetCurrentDirection();
 
-        switch ((int)yRotation)
+        switch (currentDirection)
         {
-            case 0:
-            case 360:
+            case CompassDirection.North:
                 compassText.text = "N";
                 break;
-            case 90:
+            case CompassDirection.East:
                 compassText.text = "E";
                 break;
-            case 180:
+            case CompassDirection.South:
                 compassText.text = "S";
                 break;
-            case 270:
+            case CompassDirection.West:
                 compassText.text = "W";
                 break;
         }
+    }
+
+    public CompassDirection GetCurrentDirection()
+    {
+        float yRotation = Mathf.Round(transform.eulerAngles.y);
+
+        if ((yRotation >= 315 && yRotation <= 360) || (yRotation >= 0 && yRotation < 45))
+            return CompassDirection.North;
+        else if (yRotation >= 45 && yRotation < 135)
+            return CompassDirection.East;
+        else if (yRotation >= 135 && yRotation < 225)
+            return CompassDirection.South;
+        else if (yRotation >= 225 && yRotation < 315)
+            return CompassDirection.West;
+        else
+            return CompassDirection.North; // fallback
     }
 }
