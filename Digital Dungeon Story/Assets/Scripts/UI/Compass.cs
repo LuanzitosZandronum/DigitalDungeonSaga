@@ -1,58 +1,60 @@
-// Compass.cs
 using UnityEngine;
 using TMPro;
+
 
 public enum CompassDirection
 {
     North,
-    East,
     South,
+    East,
     West
 }
 
 public class Compass : MonoBehaviour
 {
     public TextMeshProUGUI compassText;
+    private Transform player;
+
+    void Start()
+    {
+        player = GameObject.FindGameObjectWithTag("Player").transform;
+    }
+
+public CompassDirection GetCurrentDirection()
+{
+    float y = transform.eulerAngles.y;
+
+    if (y >= 315 || y < 45)
+        return CompassDirection.North;
+    else if (y >= 45 && y < 135)
+        return CompassDirection.East;
+    else if (y >= 135 && y < 225)
+        return CompassDirection.South;
+    else
+        return CompassDirection.West;
+}
 
     void Update()
     {
-        UpdateCompass();
-    }
+        float y = player.eulerAngles.y;
 
-    void UpdateCompass()
-    {
-        CompassDirection currentDirection = GetCurrentDirection();
+        // Arredonda para o múltiplo de 90° mais próximo
+        int direction = Mathf.RoundToInt(y / 90f) * 90 % 360;
 
-        switch (currentDirection)
+        switch (direction)
         {
-            case CompassDirection.North:
+            case 0:
                 compassText.text = "N";
                 break;
-            case CompassDirection.East:
-                compassText.text = "E";
+            case 90:
+                compassText.text = "E"; // ou "E"
                 break;
-            case CompassDirection.South:
+            case 180:
                 compassText.text = "S";
                 break;
-            case CompassDirection.West:
-                compassText.text = "W";
+            case 270:
+                compassText.text = "W"; // ou "W"
                 break;
         }
-    }
-
-    public CompassDirection GetCurrentDirection()
-    {
-        float yRotation = Mathf.Round(transform.eulerAngles.y);
-
-        if ((yRotation >= 315 && yRotation <= 360) || (yRotation >= 0 && yRotation < 45))
-            return CompassDirection.North;
-        else if (yRotation >= 45 && yRotation < 135)
-            return CompassDirection.East;
-        else if (yRotation >= 135 && yRotation < 225)
-            return CompassDirection.South;
-        else if (yRotation >= 225 && yRotation < 315)
-            return CompassDirection.West;
-        else
-            return CompassDirection.North; // fallback
     }
 }

@@ -1,18 +1,15 @@
+using System.Collections.Generic;
 using UnityEngine;
-
-public enum InteractionType
-{
-    Description,
-    Dialogue
-}
 
 public class InteractableObject : MonoBehaviour
 {
-    public InteractionType interactionType;
-    public string textToShow;
-    public Sprite characterImage;
-    public CompassDirection requiredDirection;
+    public enum InteractionType { Description, Dialogue }
 
+    public InteractionType interactionType;
+    public List<string> descriptionLines;
+    public List<DialogueLine> dialogueLines;
+
+    public CompassDirection requiredDirection;
     public float interactionRange = 3f;
 
     private Transform player;
@@ -28,20 +25,47 @@ public class InteractableObject : MonoBehaviour
     {
         float distance = Vector3.Distance(transform.position, player.position);
 
-        if (distance <= interactionRange)
+        if (Input.GetKeyDown(KeyCode.E))
         {
-            if (Input.GetKeyDown(KeyCode.E))
+            if (InteractionUI.Instance != null && InteractionUI.Instance.isInteracting)
             {
-                if (playerCompass.GetCurrentDirection() == requiredDirection)
-                {
-                    Interact();
-                }
+                InteractionUI.Instance.Continue();
+                return;
+            }
+
+            if (distance <= interactionRange && playerCompass.GetCurrentDirection() == requiredDirection)
+            {
+                Interact();
             }
         }
     }
 
     void Interact()
     {
-        Debug.Log("Interagiu com " + gameObject.name);
+        switch (interactionType)
+        {
+            case InteractionType.Description:
+                if (descriptionLines != null && descriptionLines.Count > 0)
+                {
+                    InteractionUI.Instance.StartDescription(descriptionLines);
+                }
+                else
+                {
+                    Debug.LogWarning("Descrição vazia.");
+                }
+                break;
+
+            case InteractionType.Dialogue:
+                if (dialogueLines != null && dialogueLines.Count > 0)
+                {
+                    InteractionUI.Instance.StartDialogue(dialogueLines);
+                }
+                else
+                {
+                    Debug.LogWarning("Diálogo vazio.");
+                }
+                break;
+        }
     }
+
 }
