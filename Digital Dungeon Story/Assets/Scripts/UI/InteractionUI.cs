@@ -28,6 +28,8 @@ public class InteractionUI : MonoBehaviour
     private int currentDialogueIndex;
 
     public bool isInteracting = false;
+    private InteractableObject currentInteractable;
+
 
     private void Awake()
     {
@@ -35,10 +37,11 @@ public class InteractionUI : MonoBehaviour
         else Destroy(gameObject);
     }
 
-    public void StartDescription(List<string> lines)
+    public void StartDescription(List<string> lines, InteractableObject source)
     {
         isInteracting = true;
         descriptionPanel.SetActive(true);
+        currentInteractable = source;
         currentDescriptionLines = lines;
         currentDescriptionIndex = 0;
         ShowNextDescription();
@@ -57,10 +60,11 @@ public class InteractionUI : MonoBehaviour
         currentDescriptionIndex++;
     }
 
-    public void StartDialogue(List<DialogueLine> lines)
+    public void StartDialogue(List<DialogueLine> lines, InteractableObject source)
     {
         isInteracting = true;
         dialoguePanel.SetActive(true);
+        currentInteractable = source;
         currentDialogueLines = lines;
         currentDialogueIndex = 0;
         ShowCurrentDialogue();
@@ -95,8 +99,15 @@ public class InteractionUI : MonoBehaviour
         }
         else if (dialoguePanel.activeSelf)
         {
-            currentDialogueIndex++; // <--- Avança o índice aqui
-            ShowCurrentDialogue();
+            if (currentDialogueIndex < currentDialogueLines.Count)
+            {
+                currentDialogueIndex++;  // Incrementa o índice antes de mostrar o próximo diálogo
+                ShowCurrentDialogue();
+            }
+            else
+            {
+                EndInteraction();
+            }
         }
     }
 
@@ -106,6 +117,12 @@ public class InteractionUI : MonoBehaviour
         dialoguePanel.SetActive(false);
         descriptionPanel.SetActive(false);
         UnlockPlayerMovement();
+
+        if (currentInteractable != null)
+        {
+            currentInteractable.OnInteractionEnded();
+            currentInteractable = null;
+        }
     }
 
     void LockPlayerMovement()

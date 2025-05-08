@@ -693,7 +693,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd1c573a33fbc0a44ab84c11d819a8bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  interactionType: 0
+  interactionType: 1
   descriptionLines: []
   dialogueLines: []
   requiredDirection: 0
