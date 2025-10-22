@@ -1,41 +1,63 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-//public class MainMenuManager : MonoBehaviour
 public class PauseMenu : MonoBehaviour
 {
+    public GameObject pauseMenuUI;
+
+    void Start()
+    {
+        if (pauseMenuUI != null)
+            pauseMenuUI.SetActive(false);
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            TogglePause();
+        }
+    }
+
+    public void TogglePause()
+    {
+        if (pauseMenuUI != null && pauseMenuUI.activeSelf)
+            ResumeGame();
+        else
+            PauseGame();
+    }
+
+    public void PauseGame()
+    {
+        if (pauseMenuUI != null)
+            pauseMenuUI.SetActive(true);
+
+        Time.timeScale = 0f;
+    }
+
     public void ResumeGame()
     {
-        SceneManager.LoadScene("GameplayTest");
+        if (pauseMenuUI != null)
+            pauseMenuUI.SetActive(false);
+
+        Time.timeScale = 1f;
     }
 
-    public void Inventory()
-    {
-    }
-
-    public void Skills()
-    {
-    }
-
-    public void Status()
-    {
-    }
-
-    public void Settings()
-    {
-    }
-    
     public void ReturnMenu()
     {
+        Time.timeScale = 1f;
         SceneManager.LoadScene("MainMenu");
     }
+
     public void Quit()
     {
-        //Application.Quit();
-        #if UNITY_EDITOR
-        UnityEditor.EditorApplication.ExitPlaymode(); // Para o Play Mode no Editor
-        #else
-        Application.Quit(); // Fecha o jogo no build
-        #endif
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("MainMenu");
     }
+
+    // Placeholders for menu buttons
+    public void Inventory() { }
+    public void Skills() { }
+    public void Status() { }
+    public void Settings() { }
 }

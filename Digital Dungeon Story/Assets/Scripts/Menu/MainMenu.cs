@@ -9,9 +9,18 @@ public class MainMenu : MonoBehaviour
         SceneManager.LoadScene("GameplayTest");
     }
 
+    public void OpenControls()
+    {
+        SceneManager.LoadScene("Controls");
+    }
+
+    public void OpenExtraScene()
+    {
+        SceneManager.LoadScene("ExtraScene");
+    }
+
     public void Quit()
     {
-        //Application.Quit();
         #if UNITY_EDITOR
         UnityEditor.EditorApplication.ExitPlaymode(); // Para o Play Mode no Editor
         #else
