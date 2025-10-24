@@ -345,6 +345,66 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 151432788}
   m_CullTransparentMesh: 1
+--- !u!1 &172628413
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 172628415}
+  - component: {fileID: 172628416}
+  m_Layer: 0
+  m_Name: AudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &172628415
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 172628413}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.92515, y: 0, z: 1.50294}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &172628416
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 172628413}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65c5f8d2b0bb99c44a072885c78e75c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AudioManager
+  sounds:
+  - name: Footstep
+    clip: {fileID: 8300000, guid: 5475f84ecf1b33f4d8ed0acf3e6753e9, type: 3}
+    volume: 1
+    pitch: 1
+    pitchVariation: 0.35
+  - name: 
+    clip: {fileID: 0}
+    volume: 0
+    pitch: 0
+    pitchVariation: 0
+  - name: 
+    clip: {fileID: 0}
+    volume: 0
+    pitch: 0
+    pitchVariation: 0
 --- !u!1 &575925333
 GameObject:
   m_ObjectHideFlags: 0
@@ -1136,7 +1196,7 @@ AudioListener:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1562726198}
-  m_Enabled: 1
+  m_Enabled: 0
 --- !u!20 &1562726200
 Camera:
   m_ObjectHideFlags: 0
@@ -1791,3 +1851,4 @@ SceneRoots:
   - {fileID: 134875187}
   - {fileID: 1033031055}
   - {fileID: 1319565318}
+  - {fileID: 172628415}

@@ -36,6 +36,7 @@ public class PlayerMovement : MonoBehaviour
         }
 
         transform.position = targetPosition;
+        AudioManager.Instance.PlaySFXByName("Footstep");
         isMoving = false;
     }
 }
