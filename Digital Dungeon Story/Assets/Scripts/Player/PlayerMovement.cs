@@ -1,12 +1,15 @@
 using UnityEngine;
+using System.Collections;
 
 public class PlayerMovement : MonoBehaviour
 {
-    public float moveDistance = 1.0f; // Distância de cada movimento no grid
-    public float moveSpeed = 5.0f; // Velocidade do movimento
+    public float moveDistance = 1.0f;
+    public float moveSpeed = 5.0f;
     private bool isMoving = false;
-    
-    private PlayerRotation playerRotation; // Referência ao script de rotação
+    private PlayerRotation playerRotation;
+
+    public LayerMask wallLayer;
+    public Vector3 collisionCheckSize = new Vector3(0.9f, 0.9f, 0.9f);
 
     void Start()
     {
@@ -17,8 +20,42 @@ public class PlayerMovement : MonoBehaviour
     {
         if (!isMoving && !playerRotation.IsRotating && Input.GetKey(KeyCode.W))
         {
-            StartCoroutine(MoveForward());
+            if (CanMove())
+            {
+                StartCoroutine(MoveForward());
+            }
         }
+    }
+
+    private bool CanMove()
+    {
+        Vector3 targetPosition = transform.position + transform.forward * moveDistance;
+
+        Collider[] hitColliders = Physics.OverlapBox(
+            center: targetPosition,
+            halfExtents: collisionCheckSize / 2f,
+            orientation: transform.rotation,
+            layerMask: wallLayer
+        );
+
+        if (hitColliders.Length > 0)
+        {
+            foreach (Collider hit in hitColliders)
+            {
+                if (hit.transform == transform) continue;
+
+                Collision type = hit.GetComponent<Collision>();
+
+                if (type != null && type.collisionType == Collision.Type.Wall)
+                {
+                    Debug.Log("Movimento bloqueado: Colisão com Parede detectada.");
+                    return false;
+                }
+            }
+        }
+
+        Debug.DrawRay(transform.position, transform.forward * moveDistance, Color.green, 1f);
+        return true;
     }
 
     private System.Collections.IEnumerator MoveForward()
@@ -28,15 +65,22 @@ public class PlayerMovement : MonoBehaviour
         Vector3 targetPosition = transform.position + transform.forward * moveDistance;
 
         float elapsedTime = 0;
-        while (elapsedTime < moveDistance / moveSpeed)
+        float moveDuration = moveDistance / moveSpeed;
+
+        while (elapsedTime < moveDuration)
         {
-            transform.position = Vector3.Lerp(startPosition, targetPosition, elapsedTime / (moveDistance / moveSpeed));
+            transform.position = Vector3.Lerp(startPosition, targetPosition, elapsedTime / moveDuration);
             elapsedTime += Time.deltaTime;
             yield return null;
         }
 
         transform.position = targetPosition;
-        AudioManager.Instance.PlaySFXByName("Footstep");
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFXByName("Footstep");
+        }
+
         isMoving = false;
     }
 }
