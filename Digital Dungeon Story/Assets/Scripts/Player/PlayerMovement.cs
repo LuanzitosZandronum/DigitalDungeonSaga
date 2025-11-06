@@ -14,15 +14,26 @@ public class PlayerMovement : MonoBehaviour
     void Start()
     {
         playerRotation = GetComponent<PlayerRotation>();
+        StartCoroutine(MovementLoop());
     }
 
     void Update()
     {
-        if (!isMoving && !playerRotation.IsRotating && Input.GetKey(KeyCode.W))
+    }
+
+    public IEnumerator MovementLoop()
+    {
+        while (true)
         {
+            yield return new WaitWhile(() => !Input.GetKey(KeyCode.W) || isMoving || playerRotation.IsRotating);
             if (CanMove())
             {
-                StartCoroutine(MoveForward());
+                yield return StartCoroutine(MoveSingleStep());
+            }
+
+            else
+            {
+                yield return null;
             }
         }
     }
@@ -58,7 +69,7 @@ public class PlayerMovement : MonoBehaviour
         return true;
     }
 
-    private System.Collections.IEnumerator MoveForward()
+    private System.Collections.IEnumerator MoveSingleStep()
     {
         isMoving = true;
         Vector3 startPosition = transform.position;
