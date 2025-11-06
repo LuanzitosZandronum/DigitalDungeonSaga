@@ -1,17 +1,27 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 using System.Collections;
-using TMPro; // Usando TextMeshPro para textos de UI
+using TMPro;
 
-public class MenuAnimation : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class MenuAnimation : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
+    // === CONSTANTES DE SOM ===
+    // Declaramos os nomes dos sons aqui, como strings literais, para serem reaproveitados.
+    private const string HOVER_SOUND_NAME = "MenuHover";
+    private const string CLICK_SOUND_NAME = "MenuClick";
+
+    // Cooldown específico para o som de hover (0.15s é um bom ponto de partida para evitar repetição excessiva)
+    private const float HOVER_COOLDOWN = 0.15f;
+
     // O componente TextMeshProUGUI que será animado
-    // Tentar obter TextMeshProUGUI (para textos modernos)
     private TextMeshProUGUI buttonText;
 
-    [Header("Configurações de Animação")]
+    [Header("Efeitos Visuais")]
+    [Tooltip("Imagem de brilho (glow) que será ativada e desativada no hover.")]
+    public Image glowImage;
+
     [Tooltip("Tamanho da fonte quando o mouse NÃO está sobre o botão.")]
-    // TMP usa float para tamanho de fonte, mas usaremos int para clareza no Inspector
     public int baseFontSize = 25;
 
     [Tooltip("Tamanho máximo da fonte quando o mouse ESTÁ sobre o botão.")]
@@ -24,8 +34,6 @@ public class MenuAnimation : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     void Awake()
     {
-        // Tenta obter o componente TextMeshProUGUI no GameObject (ou nos filhos)
-        // Isso deve resolver o NullReferenceException
         buttonText = GetComponentInChildren<TextMeshProUGUI>();
 
         if (buttonText == null)
@@ -35,58 +43,91 @@ public class MenuAnimation : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
             return;
         }
 
-        // Define o tamanho base inicial (TMP usa float)
         buttonText.fontSize = baseFontSize;
+
+        // Configuração do Brilho
+        if (glowImage != null)
+        {
+            glowImage.gameObject.SetActive(false);
+        }
+
+        // Nenhuma lógica de áudio é necessária aqui, o AudioManager lida com isso.
     }
+
+    // =======================================================
+    // HANDLERS DE EVENTOS DO MOUSE
+    // =======================================================
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        // Se houver uma animação em andamento, pare-a para iniciar a nova
+        // 1. Efeito Visual: Ativar Brilho
+        if (glowImage != null)
+        {
+            glowImage.gameObject.SetActive(true);
+        }
+
+        // 2. Efeito Sonoro: Tocar som de Hover
+        if (AudioManager.Instance != null)
+        {
+            // Chamada direta com a string constante e cooldown
+            AudioManager.Instance.PlaySFXByName(HOVER_SOUND_NAME, HOVER_COOLDOWN);
+        }
+
+        // 3. Animação de Fonte
         if (activeAnimation != null)
         {
             StopCoroutine(activeAnimation);
         }
-
-        // Inicia a animação de aumento
         activeAnimation = StartCoroutine(AnimateFontSize(targetFontSize));
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        // Se houver uma animação em andamento, pare-a para iniciar a nova
+        // 1. Efeito Visual: Desativar Brilho
+        if (glowImage != null)
+        {
+            glowImage.gameObject.SetActive(false);
+        }
+
+        // 2. Animação de Fonte
         if (activeAnimation != null)
         {
             StopCoroutine(activeAnimation);
         }
-
-        // Inicia a animação de retorno ao tamanho base
         activeAnimation = StartCoroutine(AnimateFontSize(baseFontSize));
     }
 
-    // Coroutine que anima suavemente o tamanho da fonte
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        // Efeito Sonoro: Tocar som de Click
+        if (AudioManager.Instance != null)
+        {
+            // Chamada direta com a string constante (usa o default cooldown)
+            AudioManager.Instance.PlaySFXByName(CLICK_SOUND_NAME);
+        }
+    }
+
+    // =======================================================
+    // COROUTINE DE ANIMAÇÃO DE FONTE (Mantida)
+    // =======================================================
+
     private IEnumerator AnimateFontSize(int targetSize)
     {
         float startTime = Time.time;
         float elapsed = 0f;
-
-        // Lê o tamanho de início como float para interpolação suave
         float startSize = buttonText.fontSize;
 
         while (elapsed < animationDuration)
         {
             elapsed = Time.time - startTime;
             float t = elapsed / animationDuration;
-
-            // Usa SmoothStep para uma transição mais orgânica (começa e termina suave)
             float smoothT = t * t * (3f - 2f * t);
 
-            // Interpola o tamanho da fonte (TMP usa float)
             buttonText.fontSize = Mathf.Lerp(startSize, targetSize, smoothT);
 
             yield return null;
         }
 
-        // Garante que o tamanho final seja exatamente o alvo
         buttonText.fontSize = targetSize;
         activeAnimation = null;
     }
