@@ -25,16 +25,21 @@ public class PlayerMovement : MonoBehaviour
     {
         while (true)
         {
-            yield return new WaitWhile(() => !Input.GetKey(KeyCode.W) || isMoving || playerRotation.IsRotating);
-            if (CanMove())
+            yield return new WaitWhile(() => !Input.GetKey(KeyCode.W) || playerRotation.IsRotating);
+
+            while (Input.GetKey(KeyCode.W) && !playerRotation.IsRotating && !isMoving)
             {
-                yield return StartCoroutine(MoveSingleStep());
+                if (CanMove())
+                {
+                    yield return StartCoroutine(MoveSingleStep());
+                }
+                else
+                {
+                    break;
+                }
             }
 
-            else
-            {
-                yield return null;
-            }
+            yield return null;
         }
     }
 
