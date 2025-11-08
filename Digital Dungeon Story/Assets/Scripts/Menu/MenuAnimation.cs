@@ -7,14 +7,10 @@ using TMPro;
 public class MenuAnimation : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     // === CONSTANTES DE SOM ===
-    // Declaramos os nomes dos sons aqui, como strings literais, para serem reaproveitados.
     private const string HOVER_SOUND_NAME = "MenuHover";
     private const string CLICK_SOUND_NAME = "MenuClick";
-
-    // Cooldown específico para o som de hover (0.15s é um bom ponto de partida para evitar repetição excessiva)
     private const float HOVER_COOLDOWN = 0.15f;
 
-    // O componente TextMeshProUGUI que será animado
     private TextMeshProUGUI buttonText;
 
     [Header("Efeitos Visuais")]
@@ -45,14 +41,37 @@ public class MenuAnimation : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         buttonText.fontSize = baseFontSize;
 
-        // Configuração do Brilho
+        // Garante que o estado base seja definido ao iniciar
+        ResetState(true);
+    }
+
+    // NOVO: Função para forçar o botão a retornar ao estado base
+    /// <summary>
+    /// Força o estado visual do botão para o estado base (tamanho/brilho)
+    /// </summary>
+    /// <param name="instant">Se verdadeiro, o texto é resetado instantaneamente sem animação.</param>
+    public void ResetState(bool instant = false)
+    {
+        // 1. Para qualquer animação em andamento
+        if (activeAnimation != null)
+        {
+            StopCoroutine(activeAnimation);
+            activeAnimation = null;
+        }
+
+        // 2. Garante que o brilho seja desativado
         if (glowImage != null)
         {
             glowImage.gameObject.SetActive(false);
         }
 
-        // Nenhuma lógica de áudio é necessária aqui, o AudioManager lida com isso.
+        // 3. Garante o tamanho base da fonte (se instantâneo)
+        if (instant && buttonText != null)
+        {
+            buttonText.fontSize = baseFontSize;
+        }
     }
+
 
     // =======================================================
     // HANDLERS DE EVENTOS DO MOUSE
@@ -60,24 +79,22 @@ public class MenuAnimation : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        // 1. Efeito Visual: Ativar Brilho
+        // 1. ANIMAÇÃO DE ENTRADA: Chame o Reset para garantir que a animação anterior pare
+        ResetState(false);
+
+        // 2. Efeito Visual: Ativar Brilho
         if (glowImage != null)
         {
             glowImage.gameObject.SetActive(true);
         }
 
-        // 2. Efeito Sonoro: Tocar som de Hover
+        // 3. Efeito Sonoro: Tocar som de Hover
         if (AudioManager.Instance != null)
         {
-            // Chamada direta com a string constante e cooldown
             AudioManager.Instance.PlaySFXByName(HOVER_SOUND_NAME, HOVER_COOLDOWN);
         }
 
-        // 3. Animação de Fonte
-        if (activeAnimation != null)
-        {
-            StopCoroutine(activeAnimation);
-        }
+        // 4. Animação de Fonte
         activeAnimation = StartCoroutine(AnimateFontSize(targetFontSize));
     }
 
@@ -102,8 +119,7 @@ public class MenuAnimation : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
         // Efeito Sonoro: Tocar som de Click
         if (AudioManager.Instance != null)
         {
-            // Chamada direta com a string constante (usa o default cooldown)
-            AudioManager.Instance.PlaySFXByName(CLICK_SOUND_NAME);
+            AudioManager.Instance.PlaySFXByName("MenuClick");
         }
     }
 
