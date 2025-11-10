@@ -420,6 +420,12 @@ MonoBehaviour:
     pitch: 1
     pitchVariation: 0
     defaultCooldown: 0.5
+  - name: MenuHover
+    clip: {fileID: 8300000, guid: 2bc390fae5c422b469f853917818a466, type: 3}
+    volume: 0.699
+    pitch: 1
+    pitchVariation: 0
+    defaultCooldown: 0.5
 --- !u!1 &175503282
 GameObject:
   m_ObjectHideFlags: 0
