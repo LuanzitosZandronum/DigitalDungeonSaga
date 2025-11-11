@@ -1,105 +1,143 @@
-using System.Collections.Generic;
+// Interactable.cs
 using UnityEngine;
+using System.Collections.Generic;
+using System; // Necessário para Action
 
-public class InteractableObject : MonoBehaviour
+public class Interactable : MonoBehaviour
 {
-    public enum InteractionType { Description, Dialogue }
+    // =======================================================
+    // EVENTOS PARA UI (InteractionUI.cs assina estes eventos)
+    // =======================================================
+    // Passa o Transform do objeto interagível para que a UI saiba onde está o objeto, se necessário.
+    public static event Action<Transform> OnInteractionRangeEntered;
+    public static event Action OnInteractionRangeExited;
 
-    public InteractionType interactionType;
-    public List<string> descriptionLines;
-    public List<DialogueLine> dialogueLines;
+    [Header("Configuração de Interação")]
+    public float interactionRange = 3f;           // Alcance máximo para interagir
+    public KeyCode interactionKey = KeyCode.E;    // Chave para iniciar a interação
 
-    public CompassDirection requiredDirection;
-    public float interactionRange = 3f;
+    [Header("Requisitos de Direção do Jogador")]
+    // Se a lista estiver vazia, a direção não é um requisito.
+    public List<CompassDirection> requiredDirections;
 
-    private Transform player;
+    [Header("Sequência de Diálogo/Texto")]
+    public List<DialogueStep> dialogueSequence;
+
+    // Referências (Podem ser nulas se não forem encontradas)
+    private Transform playerTransform;
     private Compass playerCompass;
-    private bool isInteracting = false;  // Controla o estado da interação
-    private bool isFirstInteraction = true; // Flag para detectar a primeira interação
-    private PlayerRotation playerRotation; // Referência ao script de rotação do jogador
+
+    // Estados de controle
+    private bool isReadyToInteract = false;
 
     void Start()
     {
-        player = GameObject.FindGameObjectWithTag("Player").transform;
-        playerCompass = player.GetComponent<Compass>();
-        playerRotation = player.GetComponent<PlayerRotation>(); // Pega a referência ao script de rotação
+        // 1. Tenta encontrar o Player
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+
+        if (playerObject != null)
+        {
+            playerTransform = playerObject.transform;
+            // 2. Tenta encontrar o Compass no Player
+            playerCompass = playerObject.GetComponent<Compass>();
+        }
+
+        // VERIFICAÇÃO CRÍTICA: Se o player ou o compass não forem encontrados, desabilita o script.
+        if (playerTransform == null || playerCompass == null)
+        {
+            Debug.LogError($"[Interactable Error] O objeto '{gameObject.name}' não conseguiu encontrar o Player (com a tag 'Player') ou o script 'Compass.cs'. Script desativado.", this);
+            enabled = false;
+        }
     }
 
     void Update()
     {
-        float distance = Vector3.Distance(transform.position, player.position);
-
-        // Verifica se o jogador está na área de interação e pressionou a tecla "E"
-        if (Input.GetKeyDown(KeyCode.E) && distance <= interactionRange && playerCompass.GetCurrentDirection() == requiredDirection)
+        // =======================================================
+        // PARADA DE SEGURANÇA CONTRA NullReferenceException (Linhas Críticas)
+        // =======================================================
+        // Se qualquer dependência não foi carregada no Start, o Update para.
+        if (!enabled || playerTransform == null || DialogueManager.Instance == null)
         {
-            // Se não estiver interagindo, inicia a interação
-            if (!isInteracting)
+            return;
+        }
+
+        // Se o DialogueManager estiver controlando um diálogo, não permita nova interação.
+        if (DialogueManager.Instance.IsDialogueActive)
+        {
+            // Se estava pronto para interagir antes do diálogo começar, dispara o evento de saída.
+            if (isReadyToInteract)
             {
-                Interact();
+                isReadyToInteract = false;
+                OnInteractionRangeExited?.Invoke();
+            }
+            return;
+        }
+
+        // --- Lógica de Interação ---
+
+        float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
+        bool canInteractNow = false;
+
+        // 1. Verificar o Alcance
+        if (distanceToPlayer <= interactionRange)
+        {
+            // 2. Verificar a Direção
+            if (requiredDirections.Count > 0)
+            {
+                // **Esta linha só executa se playerCompass não for nulo (verificado no Start)**
+                CompassDirection currentDir = playerCompass.GetCurrentDirection();
+
+                if (requiredDirections.Contains(currentDir))
+                {
+                    canInteractNow = true;
+                }
+            }
+            else // Não há requisitos de direção
+            {
+                canInteractNow = true;
+            }
+        }
+
+        // =======================================================
+        // LÓGICA DE EVENTOS (Controle da UI de "Pressione E")
+        // =======================================================
+        if (canInteractNow && !isReadyToInteract)
+        {
+            // Acabou de entrar no estado de interação.
+            isReadyToInteract = true;
+            // O '?' garante que o evento só será chamado se houver assinantes.
+            OnInteractionRangeEntered?.Invoke(this.transform);
+        }
+        else if (!canInteractNow && isReadyToInteract)
+        {
+            // Acabou de sair do estado de interação.
+            isReadyToInteract = false;
+            OnInteractionRangeExited?.Invoke();
+        }
+
+        // 3. Iniciar Interação
+        if (isReadyToInteract && Input.GetKeyDown(interactionKey))
+        {
+            // Inicia o diálogo
+            if (dialogueSequence.Count > 0)
+            {
+                DialogueManager.Instance.StartDialogue(dialogueSequence);
+
+                // Opcional: Esconder a UI de "Pressione E" imediatamente após a interação ser acionada.
+                isReadyToInteract = false;
+                OnInteractionRangeExited?.Invoke();
             }
             else
             {
-                // Se já estiver interagindo, apenas continua a interação (avança o diálogo ou descrição)
-                InteractionUI.Instance.Continue();
-            }
-        }
-
-        // Se o jogador sair da área ou mudar de direção, resetar a interação
-        if (distance > interactionRange || playerCompass.GetCurrentDirection() != requiredDirection)
-        {
-            isInteracting = false; // Permitir nova interação
-        }
-    }
-
-    void Interact()
-    {
-        // Apenas inicia a interação uma vez
-        if (!isInteracting)
-        {
-            isInteracting = true;
-
-            // Desabilitar rotação do jogador enquanto estiver interagindo
-            playerRotation.LockRotation();
-
-            if (isFirstInteraction) // Se for a primeira interação, inicia o diálogo imediatamente
-            {
-                // Marca que a primeira interação foi realizada
-                isFirstInteraction = false;
-            }
-
-            switch (interactionType)
-            {
-                case InteractionType.Description:
-                    if (descriptionLines != null && descriptionLines.Count > 0)
-                    {
-                        InteractionUI.Instance.StartDescription(descriptionLines, this);
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Descrição vazia.");
-                    }
-                    break;
-
-                case InteractionType.Dialogue:
-                    if (dialogueLines != null && dialogueLines.Count > 0)
-                    {
-                        InteractionUI.Instance.StartDialogue(dialogueLines, this);
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Diálogo vazio.");
-                    }
-                    break;
+                Debug.LogWarning($"Objeto Interagível '{gameObject.name}' foi ativado, mas não tem sequência de diálogo configurada!", this);
             }
         }
     }
 
-    public void OnInteractionEnded()
+    void OnDrawGizmosSelected()
     {
-        // Resetando a interação quando ela terminar, permitindo nova interação
-        isInteracting = false;
-
-        // Habilitar rotação do jogador quando a interação terminar
-        playerRotation.UnlockRotation();
+        // Desenha a esfera de alcance
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, interactionRange);
     }
 }
