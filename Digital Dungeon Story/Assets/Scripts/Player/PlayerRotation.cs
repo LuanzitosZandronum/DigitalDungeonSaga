@@ -2,14 +2,14 @@ using UnityEngine;
 
 public class PlayerRotation : MonoBehaviour
 {
-    public float rotationSpeed = 300f; // Velocidade da rotação
+    public float rotationSpeed = 300f; 
     private bool isRotating = false;
-    private bool isRotationLocked = false;  // Flag para bloquear rotação durante interação
-    public bool IsRotating => isRotating; // Permite que outros scripts verifiquem se o jogador está girando
+    private bool isRotationLocked = false;  
+    public bool IsRotating => isRotating; 
 
     void Update()
     {
-        if (!isRotating && !isRotationLocked) // Impede rotação se estiver bloqueado
+        if (!isRotating && !isRotationLocked) 
         {
             if (Input.GetKeyDown(KeyCode.A))
                 StartCoroutine(RotatePlayer(-90));
@@ -38,13 +38,11 @@ public class PlayerRotation : MonoBehaviour
         isRotating = false;
     }
 
-    // Método para bloquear a rotação
     public void LockRotation()
     {
         isRotationLocked = true;
     }
 
-    // Método para desbloquear a rotação
     public void UnlockRotation()
     {
         isRotationLocked = false;
