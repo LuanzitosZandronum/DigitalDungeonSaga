@@ -73,6 +73,7 @@ public class MenuAnimation : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
 
         if (AudioManager.Instance != null)
         {
+            AudioManager.Instance.PlaySFXByName("MenuHover");
         }
 
         if (activeAnimation != null)
@@ -103,6 +104,7 @@ public class MenuAnimation : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     {
         if (AudioManager.Instance != null)
         {
+            AudioManager.Instance.PlaySFXByName("MenuClick");
         }
     }
 

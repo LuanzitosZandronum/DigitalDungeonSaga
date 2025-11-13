@@ -48,13 +48,7 @@ public class SceneTransitionManager : MonoBehaviour
         yield return StartCoroutine(AnimateDilateValue(targetDilate, dilateDuration / 2f));
         yield return new WaitForSeconds(0.05f);
 
-        yield return StartCoroutine(AnimateDilateValue(baseDilate, dilateDuration / 2f));
-
-        if (!string.IsNullOrEmpty(sceneToLoad) && sceneToLoad != "Quit")
-        {
-            SceneManager.LoadScene(sceneToLoad);
-        }
-        else if (sceneToLoad == "Quit")
+        if (sceneToLoad == "Quit")
         {
             Debug.Log("Saindo do Jogo...");
             Application.Quit();
@@ -62,6 +56,14 @@ public class SceneTransitionManager : MonoBehaviour
 #if UNITY_EDITOR
             EditorApplication.ExitPlaymode();
 #endif
+            yield break;
+        }
+
+        yield return StartCoroutine(AnimateDilateValue(baseDilate, dilateDuration / 2f));
+
+        if (!string.IsNullOrEmpty(sceneToLoad))
+        {
+            SceneManager.LoadScene(sceneToLoad);
         }
 
         isEffectActive = false;
@@ -80,7 +82,7 @@ public class SceneTransitionManager : MonoBehaviour
                 startDilateValues.Add(text.fontMaterial.GetFloat(ShaderUtilities.ID_FaceDilate));
             }
         }
-        
+
         if (allSceneTexts.Count == 0) yield break;
 
         while (elapsed < duration)
@@ -108,5 +110,23 @@ public class SceneTransitionManager : MonoBehaviour
                 text.fontMaterial.SetFloat(ShaderUtilities.ID_FaceDilate, targetValue);
             }
         }
+    }
+
+    public void QuitGame()
+    {
+        StartCoroutine(QuitSequence());
+    }
+
+    private IEnumerator QuitSequence()
+    {
+        yield return StartCoroutine(AnimateDilateValue(targetDilate, dilateDuration / 2f));
+        yield return new WaitForSeconds(0.05f);
+        Debug.Log("Saindo do jogo...");
+
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.ExitPlaymode();
+#else
+    Application.Quit();
+#endif
     }
 }

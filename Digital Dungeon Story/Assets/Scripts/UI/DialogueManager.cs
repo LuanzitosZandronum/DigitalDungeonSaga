@@ -5,61 +5,61 @@ using System.Collections.Generic;
 
 public enum PanelType
 {
-    Dialogue,
-    Description
+    Dialogue,
+    Description
 }
 
 [System.Serializable]
 public class DialogueStep
 {
-    public PanelType type;
-    [TextArea(3, 10)]
-    public string text;
-    
+    public PanelType type;
+    [TextArea(3, 10)]
+    public string text;
+
     [Tooltip("Tempo (em segundos) de pausa entre a exibição de cada caractere.")]
     public float delayPerCharacter = 0.03f;
 }
 
 public class DialogueManager : MonoBehaviour
 {
-    public static DialogueManager Instance;
+    public static DialogueManager Instance;
 
-    [Header("Painéis de UI")]
-    public GameObject dialoguePanel;
-    public TextMeshProUGUI dialogueText;
+    [Header("Painéis de UI")]
+    public GameObject dialoguePanel;
+    public TextMeshProUGUI dialogueText;
 
-    public GameObject descriptionPanel;
-    public TextMeshProUGUI descriptionText;
+    public GameObject descriptionPanel;
+    public TextMeshProUGUI descriptionText;
 
-    [Header("Configurações")]
-    public KeyCode advanceKey = KeyCode.E;
+    [Header("Configurações")]
+    public KeyCode advanceKey = KeyCode.E;
 
-    private List<DialogueStep> currentSequence;
-    private int currentStepIndex = 0;
-    private bool isDialogueActive = false;
-    
+    private List<DialogueStep> currentSequence;
+    private int currentStepIndex = 0;
+    private bool isDialogueActive = false;
+
     private bool ignoreInitialInput = false;
 
     private Coroutine typingCoroutine;
-    private bool isTyping = false; 
+    private bool isTyping = false;
 
-    void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
 
-        dialoguePanel.SetActive(false);
-        descriptionPanel.SetActive(false);
-    }
+        dialoguePanel.SetActive(false);
+        descriptionPanel.SetActive(false);
+    }
 
-    void Update()
-    {
+    void Update()
+    {
         if (!isDialogueActive) return;
 
         if (ignoreInitialInput)
@@ -67,89 +67,93 @@ public class DialogueManager : MonoBehaviour
             if (Input.GetKeyDown(advanceKey))
             {
             }
-            ignoreInitialInput = false; 
+            ignoreInitialInput = false;
             return;
         }
 
-        if (Input.GetKeyDown(advanceKey))
-        {
+        if (Input.GetKeyDown(advanceKey))
+        {
             if (isTyping)
             {
                 SkipTypingAnimation();
             }
             else
             {
-                AdvanceDialogue();
+                AdvanceDialogue();
             }
-        }
-    }
+        }
+    }
 
-    public void StartDialogue(List<DialogueStep> sequence)
-    {
-        if (isDialogueActive) return;
-        
+    public void StartDialogue(List<DialogueStep> sequence)
+    {
+        if (isDialogueActive) return;
+
         if (typingCoroutine != null) StopCoroutine(typingCoroutine);
 
-        currentSequence = sequence;
-        currentStepIndex = 0;
-        isDialogueActive = true;
-        
+        currentSequence = sequence;
+        currentStepIndex = 0;
+        isDialogueActive = true;
+
         ignoreInitialInput = true;
 
-        DisplayCurrentStep();
+        DisplayCurrentStep();
 
-        Debug.Log("Diálogo Iniciado. Exibindo passo 0.");
-    }
+        Debug.Log("Diálogo Iniciado. Exibindo passo 0.");
+    }
 
-    private void AdvanceDialogue()
-    {
+    private void AdvanceDialogue()
+    {
         if (isTyping) return;
 
-        currentStepIndex++;
+        currentStepIndex++;
 
-        if (currentStepIndex < currentSequence.Count)
+        if (currentStepIndex < currentSequence.Count)
+        {
+            DisplayCurrentStep();
+        }
+        else
+        {
+            EndDialogue();
+        }
+    }
+
+    private void DisplayCurrentStep()
+    {
+        dialoguePanel.SetActive(false);
+        descriptionPanel.SetActive(false);
+
+        if (typingCoroutine != null) StopCoroutine(typingCoroutine);
+
+        DialogueStep step = currentSequence[currentStepIndex];
+        TextMeshProUGUI targetTextComponent;
+        string textToDisplay = step.text;
+
+        if (step.type == PanelType.Dialogue)
+        {
+            dialoguePanel.SetActive(true);
+            targetTextComponent = dialogueText;
+            textToDisplay = "\"" + step.text + "\"";
+        }
+        else
         {
-            DisplayCurrentStep();
-        }
-        else
-        {
-            EndDialogue();
-        }
-    }
+            descriptionPanel.SetActive(true);
+            targetTextComponent = descriptionText;
+        }
 
-    private void DisplayCurrentStep()
-    {
-        dialoguePanel.SetActive(false);
-        descriptionPanel.SetActive(false);
+        typingCoroutine = StartCoroutine(TypewriteText(textToDisplay, step.delayPerCharacter, targetTextComponent));
+    }
 
-        DialogueStep step = currentSequence[currentStepIndex];
-
-        if (step.type == PanelType.Dialogue)
-        {
-            dialoguePanel.SetActive(true);
-            
-            string formattedText = "\"" + step.text + "\"";
-            if (typingCoroutine != null) StopCoroutine(typingCoroutine);
-            typingCoroutine = StartCoroutine(TypewriteText(formattedText, step.delayPerCharacter));
-        }
-        else if (step.type == PanelType.Description)
-        {
-            descriptionPanel.SetActive(true);
-            descriptionText.text = step.text;
-        }
-    }
-
-    private IEnumerator TypewriteText(string textToType, float delay)
+    private IEnumerator TypewriteText(string textToType, float delay, TextMeshProUGUI targetTextComponent)
     {
         isTyping = true;
-        dialogueText.text = "";
+        targetTextComponent.text = "";
 
-        foreach (char letter in textToType.ToCharArray())
+        foreach (char letter in textToType.ToCharArray())
         {
-            dialogueText.text += letter;
+            targetTextComponent.text += letter;
             yield return new WaitForSeconds(delay);
         }
-        
+
         isTyping = false;
         typingCoroutine = null;
     }
@@ -163,25 +167,31 @@ public class DialogueManager : MonoBehaviour
         }
 
         DialogueStep step = currentSequence[currentStepIndex];
-        if (step.type == PanelType.Dialogue)
+        string textToDisplay = step.text;
+
+        TextMeshProUGUI targetTextComponent = (step.type == PanelType.Dialogue) ? dialogueText : descriptionText;
+
+        if (step.type == PanelType.Dialogue)
         {
-            dialogueText.text = "\"" + step.text + "\"";
+            textToDisplay = "\"" + step.text + "\"";
         }
+
+        targetTextComponent.text = textToDisplay;
 
         isTyping = false;
     }
 
-    private void EndDialogue()
+    private void EndDialogue()
     {
         if (typingCoroutine != null) StopCoroutine(typingCoroutine);
         isTyping = false;
-        
-        isDialogueActive = false;
-        dialoguePanel.SetActive(false);
-        descriptionPanel.SetActive(false);
 
-        Debug.Log("Diálogo Encerrado.");
-    }
+        isDialogueActive = false;
+        dialoguePanel.SetActive(false);
+        descriptionPanel.SetActive(false);
 
-    public bool IsDialogueActive => isDialogueActive;
+        Debug.Log("Diálogo Encerrado.");
+    }
+
+    public bool IsDialogueActive => isDialogueActive;
 }

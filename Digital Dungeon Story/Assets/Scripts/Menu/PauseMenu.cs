@@ -54,10 +54,4 @@ public class PauseMenu : MonoBehaviour
         Time.timeScale = 1f;
         SceneManager.LoadScene("MainMenu");
     }
-
-    // Placeholders for menu buttons
-    public void Inventory() { }
-    public void Skills() { }
-    public void Status() { }
-    public void Settings() { }
 }
